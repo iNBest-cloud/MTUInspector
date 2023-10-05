@@ -10,7 +10,7 @@ def send_ping(target, size, count, verbose, no_fragment, interface):
     if system_type == "Windows":
         cmd = ["ping", "-n", str(count), "-l", str(size), "-w", "1000", target]
         if no_fragment:
-            cmd.append('-f')
+            cmd.append("-f")
         if interface:  # In Windows, this will be the IP address of the interface.
             cmd.extend(["-S", interface])
     else:  # Assume Unix-like system (e.g., Linux, macOS)
@@ -26,33 +26,40 @@ def send_ping(target, size, count, verbose, no_fragment, interface):
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         if verbose:
-            print(output.decode('utf-8'))
-        return True, output.decode('utf-8')
+            print(output.decode("utf-8"))
+        return True, output.decode("utf-8")
     except subprocess.CalledProcessError as e:
         if verbose:
-            print(e.output.decode('utf-8'))
-        return False, e.output.decode('utf-8')
+            print(e.output.decode("utf-8"))
+        return False, e.output.decode("utf-8")
+
 
 def test_interface(interface, target, verbose):
     results = []
     for no_fragment in [False, True]:
         successes = []
         failures = []
-        
-        print(f"\nTesting with {'DF' if no_fragment else 'No DF'} flag...")  # Debug print
+
+        print(
+            f"\nTesting with {'DF' if no_fragment else 'No DF'} flag..."
+        )  # Debug print
 
         current_size = 1200
         while current_size <= 1800:
             success_counter = 0
             fail_counter = 0
             while success_counter < 1 and fail_counter < 1:
-                success, output = send_ping(target, current_size, 1, verbose, no_fragment, interface)
+                success, output = send_ping(
+                    target, current_size, 1, verbose, no_fragment, interface
+                )
                 if success:
                     success_counter += 1
                 else:
                     fail_counter += 1
 
-                print(f"Packet size: {current_size}, Success: {success}, Output: {output[:100]}...")  # Debug print
+                print(
+                    f"Packet size: {current_size}, Success: {success}, Output: {output[:100]}..."
+                )  # Debug print
 
             if success_counter == 1:
                 successes.append(current_size)
@@ -62,33 +69,81 @@ def test_interface(interface, target, verbose):
             current_size += 100
 
         results.append((no_fragment, successes, failures))
-        print(f"Results for {'DF' if no_fragment else 'No DF'} flag: {results[-1]}")  # Debug print
+        print(
+            f"Results for {'DF' if no_fragment else 'No DF'} flag: {results[-1]}"
+        )  # Debug print
 
     return results
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Ping with varying packet sizes.')
-    parser.add_argument('--dual-interface-test', action='store_true', help='Enable dual interface test mode.')
-    parser.add_argument('--interface1', default='', help='First interface for dual test mode.')
-    parser.add_argument('--interface2', default='', help='Second interface for dual test mode.')
-    parser.add_argument('--target1', default='', help='Target for first interface in dual test mode.')
-    parser.add_argument('--target2', default='', help='Target for second interface in dual test mode.')
-    parser.add_argument('--verbose', action='store_true', help='Enable verbose mode.')
-    parser.add_argument('--target', default='8.8.8.8', help='Target IP address to ping for single interface mode.')
-    parser.add_argument('--range', default='100-9100', help='Range of packet sizes for single interface mode.')
-    parser.add_argument('--increment', type=int, default=100, help='Increment value for packet size for single interface mode.')
-    parser.add_argument('--success-count', type=int, default=1, help='Number of successful pings before moving to next size for single interface mode.')
-    parser.add_argument('--fail-count', type=int, default=1, help='Number of failed pings before moving to next size for single interface mode.')
-    parser.add_argument('--no-fragment', action='store_true', help='Enable "Do Not Fragment" flag for single interface mode.')
-    parser.add_argument('--interface', default='', help='Interface or source IP to use for pinging in single interface mode.')
+    parser = argparse.ArgumentParser(description="Ping with varying packet sizes.")
+    parser.add_argument(
+        "--dual-interface-test",
+        action="store_true",
+        help="Enable dual interface test mode.",
+    )
+    parser.add_argument(
+        "--interface1", default="", help="First interface for dual test mode."
+    )
+    parser.add_argument(
+        "--interface2", default="", help="Second interface for dual test mode."
+    )
+    parser.add_argument(
+        "--target1", default="", help="Target for first interface in dual test mode."
+    )
+    parser.add_argument(
+        "--target2", default="", help="Target for second interface in dual test mode."
+    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose mode.")
+    parser.add_argument(
+        "--target",
+        default="8.8.8.8",
+        help="Target IP address to ping for single interface mode.",
+    )
+    parser.add_argument(
+        "--range",
+        default="100-9100",
+        help="Range of packet sizes for single interface mode.",
+    )
+    parser.add_argument(
+        "--increment",
+        type=int,
+        default=100,
+        help="Increment value for packet size for single interface mode.",
+    )
+    parser.add_argument(
+        "--success-count",
+        type=int,
+        default=1,
+        help="Number of successful pings before moving to next size for single interface mode.",
+    )
+    parser.add_argument(
+        "--fail-count",
+        type=int,
+        default=1,
+        help="Number of failed pings before moving to next size for single interface mode.",
+    )
+    parser.add_argument(
+        "--no-fragment",
+        action="store_true",
+        help='Enable "Do Not Fragment" flag for single interface mode.',
+    )
+    parser.add_argument(
+        "--interface",
+        default="",
+        help="Interface or source IP to use for pinging in single interface mode.",
+    )
 
     args = parser.parse_args()
 
     # Check if no arguments were provided
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
-        print("\nError: Missing parameters. Please provide the required arguments.", file=sys.stderr)
+        print(
+            "\nError: Missing parameters. Please provide the required arguments.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     if args.dual_interface_test:
@@ -116,7 +171,7 @@ def main():
                 print("Successful pings:", result[1])
                 print("Failed pings:", result[2])
     else:
-        start, end = map(int, args.range.split('-'))
+        start, end = map(int, args.range.split("-"))
 
         successes = []
         failures = []
@@ -128,9 +183,18 @@ def main():
         while current_size <= end:
             success_counter = 0
             fail_counter = 0
-            while success_counter < args.success_count and fail_counter < args.fail_count:
+            while (
+                success_counter < args.success_count and fail_counter < args.fail_count
+            ):
                 total_sent += 1
-                success, _ = send_ping(args.target, current_size, 1, args.verbose, args.no_fragment, args.interface)
+                success, _ = send_ping(
+                    args.target,
+                    current_size,
+                    1,
+                    args.verbose,
+                    args.no_fragment,
+                    args.interface,
+                )
                 if success:
                     success_counter += 1
                 else:
@@ -155,5 +219,6 @@ def main():
         print(f"Success rate: {success_percentage:.2f}%")
         print(f"Loss rate: {loss_percentage:.2f}%")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
