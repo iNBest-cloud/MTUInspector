@@ -38,5 +38,5 @@ python mtuprobe.py --help
 ```
 
 ## Author
-Fer Valdovinos
-Luis Cosio
+* Fer Valdovinos
+* Luis Cosio
