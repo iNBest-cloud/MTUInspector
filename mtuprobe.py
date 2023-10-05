@@ -104,19 +104,17 @@ def main():
 
         # Print consolidated results
         print("\nFinal Results:")
-        for label, result in [
-            ("Interface 1 (No DF)", result1_no_df),
-            ("Interface 1 (DF)", result1_df),
-            ("Interface 2 (No DF)", result2_no_df),
-            ("Interface 2 (DF)", result2_df),
+        for label, results_list in [
+            ("Interface 1", result1_no_df),
+            ("Interface 2", result2_no_df),
+            ("Interface 1", result1_df),
+            ("Interface 2", result2_df),
         ]:
-            if len(result) == 3:
-                print(f"\n{label}:")
+            for result in results_list:
+                fragment_status = "DF" if result[0] else "No DF"
+                print(f"\n{label} ({fragment_status}):")
                 print("Successful pings:", result[1])
                 print("Failed pings:", result[2])
-            else:
-                print(result)
-                print(f"\n{label}: Unexpected result format.")
     else:
         start, end = map(int, args.range.split('-'))
 
