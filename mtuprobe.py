@@ -41,8 +41,8 @@ def test_interface(interface, target, verbose):
         
         print(f"\nTesting with {'DF' if no_fragment else 'No DF'} flag...")  # Debug print
 
-        current_size = 100
-        while current_size <= 9100:
+        current_size = 1200
+        while current_size <= 1800:
             success_counter = 0
             fail_counter = 0
             while success_counter < 1 and fail_counter < 1:
