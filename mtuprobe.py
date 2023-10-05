@@ -34,190 +34,87 @@ def send_ping(target, size, count, verbose, no_fragment, interface):
         return False, e.output.decode("utf-8")
 
 
-def test_interface(interface, target, verbose):
-    results = []
-    for no_fragment in [False, True]:
-        successes = []
-        failures = []
+def test_interface(interface, target, verbose, no_fragment, start, end, increment):
+    successes = []
+    failures = []
+    current_size = start
+    while current_size <= end:
+        success_counter = 0
+        fail_counter = 0
+        while success_counter < 1 and fail_counter < 1:
+            success, _ = send_ping(
+                target, current_size, 1, verbose, no_fragment, interface
+            )
+            if success:
+                success_counter += 1
+            else:
+                fail_counter += 1
 
-        print(
-            f"\nTesting with {'DF' if no_fragment else 'No DF'} flag..."
-        )  # Debug print
+        if success_counter == 1:
+            successes.append(current_size)
+        if fail_counter == 1:
+            failures.append(current_size)
 
-        current_size = 1200
-        while current_size <= 1800:
-            success_counter = 0
-            fail_counter = 0
-            while success_counter < 1 and fail_counter < 1:
-                success, output = send_ping(
-                    target, current_size, 1, verbose, no_fragment, interface
-                )
-                if success:
-                    success_counter += 1
-                else:
-                    fail_counter += 1
+        current_size += increment
 
-                print(
-                    f"Packet size: {current_size}, Success: {success}, Output: {output[:100]}..."
-                )  # Debug print
+    return successes, failures
 
-            if success_counter == 1:
-                successes.append(current_size)
-            if fail_counter == 1:
-                failures.append(current_size)
 
-            current_size += 100
+def print_results(label, successes, failures, total_sent, total_lost):
+    success_percentage = 100 * (total_sent - total_lost) / total_sent
+    loss_percentage = 100 * total_lost / total_sent
 
-        results.append((no_fragment, successes, failures))
-        print(
-            f"Results for {'DF' if no_fragment else 'No DF'} flag: {results[-1]}"
-        )  # Debug print
-
-    return results
+    print(f"\n{label}:")
+    print("Successful pings for sizes:", successes)
+    print("Failed pings for sizes:", failures)
+    print(f"Total pings sent: {total_sent}")
+    print(f"Total pings lost: {total_lost}")
+    print(f"Success rate: {success_percentage:.2f}%")
+    print(f"Loss rate: {loss_percentage:.2f}%")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Ping with varying packet sizes.")
     parser.add_argument(
-        "--dual-interface-test",
-        action="store_true",
-        help="Enable dual interface test mode.",
+        "--interface",
+        required=True,
+        help='Interface(s) to use for pinging. For dual interface mode, provide as "int1,int2".',
     )
-    parser.add_argument(
-        "--interface1", default="", help="First interface for dual test mode."
-    )
-    parser.add_argument(
-        "--interface2", default="", help="Second interface for dual test mode."
-    )
-    parser.add_argument(
-        "--target1", default="", help="Target for first interface in dual test mode."
-    )
-    parser.add_argument(
-        "--target2", default="", help="Target for second interface in dual test mode."
-    )
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose mode.")
     parser.add_argument(
         "--target",
-        default="8.8.8.8",
-        help="Target IP address to ping for single interface mode.",
+        required=True,
+        help='Target IP address(es) to ping. For dual interface mode, provide as "ip1,ip2".',
+    )
+    parser.add_argument("--range", required=True, help="Range of packet sizes.")
+    parser.add_argument(
+        "--increment", type=int, required=True, help="Increment value for packet size."
     )
     parser.add_argument(
-        "--range",
-        default="100-9100",
-        help="Range of packet sizes for single interface mode.",
+        "--no-fragment", action="store_true", help='Enable "Do Not Fragment" flag.'
     )
-    parser.add_argument(
-        "--increment",
-        type=int,
-        default=100,
-        help="Increment value for packet size for single interface mode.",
-    )
-    parser.add_argument(
-        "--success-count",
-        type=int,
-        default=1,
-        help="Number of successful pings before moving to next size for single interface mode.",
-    )
-    parser.add_argument(
-        "--fail-count",
-        type=int,
-        default=1,
-        help="Number of failed pings before moving to next size for single interface mode.",
-    )
-    parser.add_argument(
-        "--no-fragment",
-        action="store_true",
-        help='Enable "Do Not Fragment" flag for single interface mode.',
-    )
-    parser.add_argument(
-        "--interface",
-        default="",
-        help="Interface or source IP to use for pinging in single interface mode.",
-    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose mode.")
 
     args = parser.parse_args()
 
-    # Check if no arguments were provided
-    if len(sys.argv) == 1:
-        parser.print_help(sys.stderr)
-        print(
-            "\nError: Missing parameters. Please provide the required arguments.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    interfaces = args.interface.split(",")
+    targets = args.target.split(",")
+    start, end = map(int, args.range.split("-"))
 
-    if args.dual_interface_test:
-        print("\nTesting Interface 1 without DF flag...")
-        result1_no_df = test_interface(args.interface1, args.target1, args.verbose)
-        print("\nTesting Interface 1 with DF flag...")
-        result1_df = test_interface(args.interface1, args.target1, args.verbose)
-
-        print("\nTesting Interface 2 without DF flag...")
-        result2_no_df = test_interface(args.interface2, args.target2, args.verbose)
-        print("\nTesting Interface 2 with DF flag...")
-        result2_df = test_interface(args.interface2, args.target2, args.verbose)
-
-        # Print consolidated results
-        print("\nFinal Results:")
-        results_mapping = [
-            ("Interface 1 (No DF)", result1_no_df[0]),
-            ("Interface 1 (DF)", result1_df[1]),
-            ("Interface 2 (No DF)", result2_no_df[0]),
-            ("Interface 2 (DF)", result2_df[1])
-        ]
-
-        for label, result in results_mapping:
-            print(f"\n{label}:")
-            print("Successful pings:", result[1])
-            print("Failed pings:", result[2])
-    else:
-        start, end = map(int, args.range.split("-"))
-
-        successes = []
-        failures = []
-
-        total_sent = 0
-        total_lost = 0
-
-        current_size = start
-        while current_size <= end:
-            success_counter = 0
-            fail_counter = 0
-            while (
-                success_counter < args.success_count and fail_counter < args.fail_count
-            ):
-                total_sent += 1
-                success, _ = send_ping(
-                    args.target,
-                    current_size,
-                    1,
-                    args.verbose,
-                    args.no_fragment,
-                    args.interface,
-                )
-                if success:
-                    success_counter += 1
-                else:
-                    fail_counter += 1
-                    total_lost += 1
-
-            if success_counter == args.success_count:
-                successes.append(current_size)
-            if fail_counter == args.fail_count:
-                failures.append(current_size)
-
-            current_size += args.increment
-
-        success_percentage = 100 * (total_sent - total_lost) / total_sent
-        loss_percentage = 100 * total_lost / total_sent
-
-        print("\nSummary:")
-        print("Successful pings for sizes:", successes)
-        print("Failed pings for sizes:", failures)
-        print(f"Total pings sent: {total_sent}")
-        print(f"Total pings lost: {total_lost}")
-        print(f"Success rate: {success_percentage:.2f}%")
-        print(f"Loss rate: {loss_percentage:.2f}%")
+    for interface, target in zip(interfaces, targets):
+        for no_fragment in [False, True]:
+            successes, failures = test_interface(
+                interface,
+                target,
+                args.verbose,
+                args.no_fragment,
+                start,
+                end,
+                args.increment,
+            )
+            total_sent = len(successes) + len(failures)
+            total_lost = len(failures)
+            label = f"{interface} ({'DF' if no_fragment else 'No DF'})"
+            print_results(label, successes, failures, total_sent, total_lost)
 
 
 if __name__ == "__main__":
