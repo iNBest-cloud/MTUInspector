@@ -38,17 +38,21 @@ def test_interface(interface, target, verbose):
     for no_fragment in [False, True]:
         successes = []
         failures = []
+        
+        print(f"\nTesting with {'DF' if no_fragment else 'No DF'} flag...")  # Debug print
 
         current_size = 100
         while current_size <= 9100:
             success_counter = 0
             fail_counter = 0
             while success_counter < 1 and fail_counter < 1:
-                success, _ = send_ping(target, current_size, 1, verbose, no_fragment, interface)
+                success, output = send_ping(target, current_size, 1, verbose, no_fragment, interface)
                 if success:
                     success_counter += 1
                 else:
                     fail_counter += 1
+
+                print(f"Packet size: {current_size}, Success: {success}, Output: {output[:100]}...")  # Debug print
 
             if success_counter == 1:
                 successes.append(current_size)
@@ -58,7 +62,10 @@ def test_interface(interface, target, verbose):
             current_size += 100
 
         results.append((no_fragment, successes, failures))
+        print(f"Results for {'DF' if no_fragment else 'No DF'} flag: {results[-1]}")  # Debug print
+
     return results
+
 
 def main():
     parser = argparse.ArgumentParser(description='Ping with varying packet sizes.')
