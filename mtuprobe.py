@@ -101,20 +101,19 @@ def main():
     start, end = map(int, args.range.split("-"))
 
     for interface, target in zip(interfaces, targets):
-        for no_fragment in [False, True]:
-            successes, failures = test_interface(
-                interface,
-                target,
-                args.verbose,
-                args.no_fragment,
-                start,
-                end,
-                args.increment,
-            )
-            total_sent = len(successes) + len(failures)
-            total_lost = len(failures)
-            label = f"{interface} ({'DF' if no_fragment else 'No DF'})"
-            print_results(label, successes, failures, total_sent, total_lost)
+        successes, failures = test_interface(
+            interface,
+            target,
+            args.verbose,
+            args.no_fragment,
+            start,
+            end,
+            args.increment,
+        )
+        total_sent = len(successes) + len(failures)
+        total_lost = len(failures)
+        label = f"{interface} ({'DF' if args.no_fragment else 'No DF'})"
+        print_results(label, successes, failures, total_sent, total_lost)
 
 
 if __name__ == "__main__":
