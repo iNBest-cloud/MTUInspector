@@ -1,6 +1,8 @@
 import subprocess
 import argparse
 import platform
+import sys
+
 
 def send_ping(target, size, count, verbose, no_fragment, interface):
     system_type = platform.system()
@@ -75,6 +77,12 @@ def main():
     parser.add_argument('--interface', default='', help='Interface or source IP to use for pinging in single interface mode.')
 
     args = parser.parse_args()
+
+    # Check if no arguments were provided
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        print("\nError: Missing parameters. Please provide the required arguments.", file=sys.stderr)
+        sys.exit(1)
 
     if args.dual_interface_test:
         print("\nTesting Interface 1 without DF flag...")
