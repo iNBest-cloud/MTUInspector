@@ -115,6 +115,7 @@ def main():
                 print("Successful pings:", result[1])
                 print("Failed pings:", result[2])
             else:
+                print(result)
                 print(f"\n{label}: Unexpected result format.")
     else:
         start, end = map(int, args.range.split('-'))
