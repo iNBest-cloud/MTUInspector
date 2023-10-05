@@ -103,9 +103,12 @@ def main():
             ("Interface 2 (No DF)", result2_no_df),
             ("Interface 2 (DF)", result2_df),
         ]:
-            print(f"\n{label}:")
-            print("Successful pings:", result[1])
-            print("Failed pings:", result[2])
+            if len(result) == 3:
+                print(f"\n{label}:")
+                print("Successful pings:", result[1])
+                print("Failed pings:", result[2])
+            else:
+                print(f"\n{label}: Unexpected result format.")
     else:
         start, end = map(int, args.range.split('-'))
 
